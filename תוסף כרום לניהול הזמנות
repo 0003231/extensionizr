@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>חיפוש הזמנות</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .search-section {
+            padding: 30px;
+            background: white;
+        }
+
+        .search-group {
+            margin-bottom: 20px;
+        }
+
+        .search-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            direction: ltr;
+            text-align: center;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .search-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4facfe;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .order-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            margin: 15px 20px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .order-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .field-group {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .field-group:last-child {
+            border-bottom: none;
+        }
+
+        .field-label {
+            font-weight: 600;
+            color: #495057;
+            min-width: 100px;
+            font-size: 13px;
+        }
+
+        .field-value {
+            flex: 1;
+            margin: 0 10px;
+            color: #212529;
+            font-size: 14px;
+            word-break: break-word;
+        }
+
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+            min-width: 60px;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+            transform: scale(1.05);
+        }
+
+        .copy-btn.copied {
+            background: #17a2b8;
+        }
+
+        .product-info {
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        .product-info .field-group {
+            border-bottom: 1px solid #bbdefb;
+            margin-bottom: 8px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+
+        .no-results-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .close-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .close-btn:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 20px;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <button class="close-btn" onclick="closeExtension()" title="סגור">✕</button>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🔍 חיפוש הזמנות</h1>
+            <p>הזן מספר הזמנה לחיפוש פרטי הלקוח</p>
+        </div>
+
+        <div class="search-section">
+            <div class="search-group">
+                <label for="orderNumber">מספר הזמנה:</label>
+                <input type="text" id="orderNumber" class="search-input" placeholder="הזן מספר הזמנה..." />
+            </div>
+            <button class="search-btn" onclick="searchOrder()">🔍 חפש הזמנה</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let isSearching = false;
+
+        // Translation function for addresses and cities
+        async function translateToEnglish(text) {
+            if (!text || text.trim() === '') return '';
+            
+            // Simple Hebrew to English city translations
+            const cityTranslations = {
+                'תל אביב': 'Tel Aviv',
+                'ירושלים': 'Jerusalem',
+                'חיפה': 'Haifa',
+                'באר שבע': 'Beer Sheva',
+                'נתניה': 'Netanya',
+                'פתח תקווה': 'Petah Tikva',
+                'אשדוד': 'Ashdod',
+                'ראשון לציון': 'Rishon LeZion',
+                'חולון': 'Holon',
+                'בני ברק': 'Bnei Brak',
+                'רמת גן': 'Ramat Gan',
+                'אשקלון': 'Ashkelon',
+                'רחובות': 'Rehovot',
+                'בת ים': 'Bat Yam',
+                'כפר סבא': 'Kfar Saba',
+                'הרצליה': 'Herzliya',
+                'חדרה': 'Hadera',
+                'מודיעין': 'Modiin',
+                'לוד': 'Lod',
+                'רמלה': 'Ramla'
+            };
+
+            // Check if it's a known city
+            const lowerText = text.trim();
+            for (const [hebrew, english] of Object.entries(cityTranslations)) {
+                if (lowerText.includes(hebrew)) {
+                    return english;
+                }
+            }
+
+            // For addresses, try to transliterate Hebrew characters
+            const hebrewToEnglish = {
+                'א': 'a', 'ב': 'b', 'ג': 'g', 'ד': 'd', 'ה': 'h', 'ו': 'v', 'ז': 'z',
+                'ח': 'ch', 'ט': 't', 'י': 'y', 'כ': 'k', 'ך': 'k', 'ל': 'l', 'מ': 'm',
+                'ם': 'm', 'ן': 'n', 'נ': 'n', 'ס': 's', 'ע': 'a', 'פ': 'p', 'ף': 'f',
+                'צ': 'tz', 'ץ': 'tz', 'ק': 'k', 'ר': 'r', 'ש': 'sh', 'ת': 't'
+            };
+
+            let transliterated = text;
+            for (const [heb, eng] of Object.entries(hebrewToEnglish)) {
+                transliterated = transliterated.replace(new RegExp(heb, 'g'), eng);
+            }
+
+            return transliterated;
+        }
+
+        async function searchOrder() {
+            if (isSearching) return;
+            
+            const orderNumber = document.getElementById('orderNumber').value.trim();
+            if (!orderNumber) {
+                alert('אנא הזן מספר הזמנה');
+                return;
+            }
+
+            isSearching = true;
+            const searchBtn = document.querySelector('.search-btn');
+            const resultsDiv = document.getElementById('results');
+            
+            searchBtn.disabled = true;
+            searchBtn.textContent = 'מחפש...';
+            
+            resultsDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>מחפש הזמנה...</p>
+                </div>
+            `;
+
+            try {
+                const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR8pOji2iZ1dO-sQP9Y8DPeHoSSPlOqGcjeIzKfECeEg-YeW0e20Zpt0uVDJQL1sC3NPPgO5jGpvguu/pub?output=csv';
+                const response = await fetch(csvUrl);
+                const csvText = await response.text();
+                
+                const rows = csvText.split('\n').map(row => {
+                    const result = [];
+                    let current = '';
+                    let inQuotes = false;
+                    
+                    for (let i = 0; i < row.length; i++) {
+                        const char = row[i];
+                        if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === ',' && !inQuotes) {
+                            result.push(current.trim());
+                            current = '';
+                        } else {
+                            current += char;
+                        }
+                    }
+                    result.push(current.trim());
+                    return result;
+                });
+
+                // Find matching orders
+                const matchingOrders = [];
+                for (let i = 1; i < rows.length; i++) { // Skip header row
+                    const row = rows[i];
+                    if (row[0] && row[0].toString().trim() === orderNumber) {
+                        matchingOrders.push(row);
+                    }
+                }
+
+                if (matchingOrders.length === 0) {
+                    resultsDiv.innerHTML = `
+                        <div class="no-results">
+                            <div class="no-results-icon">📦</div>
+                            <h3>ההזמנה לא נמצאה</h3>
+                            <p>מספר הזמנה ${orderNumber} לא קיים במערכת</p>
+                        </div>
+                    `;
+                } else {
+                    let resultsHTML = '<div class="results-container">';
+                    
+                    for (let i = 0; i < matchingOrders.length; i++) {
+                        const order = matchingOrders[i];
+                        
+                        // Correct column mapping based on specification
+                        const customerName = order[3] || ''; // Column D
+                        const email = order[4] || ''; // Column E  
+                        const phone = order[5] || ''; // Column F
+                        const cityHebrew = order[6] || ''; // Column G
+                        const addressPart1 = order[7] || ''; // Column H
+                        const addressPart2 = order[8] || ''; // Column I
+                        const postalCode = order[9] || ''; // Column J
+                        const shippingMethod = order[10] || ''; // Column K
+                        const productName = order[1] || ''; // Column B
+                        const quantity = order[2] || ''; // Column C
+                        
+                        // Translate city and address
+                        const city = await translateToEnglish(cityHebrew);
+                        const fullAddress = await translateToEnglish(addressPart1 + ' ' + addressPart2);
+                        
+                        resultsHTML += `
+                            <div class="order-card">
+                                <div class="order-header">
+                                    הזמנה #${orderNumber} ${matchingOrders.length > 1 ? `(${i + 1}/${matchingOrders.length})` : ''}
+                                </div>
+                                
+                                <div class="field-group">
+                                    <span class="field-label">שם הלקוח:</span>
+                                    <span class="field-value">${customerName}</span>
+                                    <button class="copy-btn" data-copy="${customerName}">העתק</button>
+                                </div>
+                                
+                                <div class="field-group">
+                                    <span class="field-label">אימייל:</span>
+                                    <span class="field-value">${email}</span>
+                                    <button class="copy-btn" data-copy="${email}">העתק</button>
+                                </div>
+                                
+                                <div class="field-group">
+                                    <span class="field-label">טלפון:</span>
+                                    <span class="field-value">${phone}</span>
+                                    <button class="copy-btn" data-copy="${phone}">העתק</button>
+                                </div>
+                                
+                                <div class="field-group">
+                                    <span class="field-label">עיר (אנגלית):</span>
+                                    <span class="field-value">${city}</span>
+                                    <button class="copy-btn" data-copy="${city}">העתק</button>
+                                </div>
+                                
+                                <div class="field-group">
+                                    <span class="field-label">כתובת (אנגלית):</span>
+                                    <span class="field-value">${fullAddress}</span>
+                                    <button class="copy-btn" data-copy="${fullAddress}">העתק</button>
+                                </div>
+                                
+                                <div class="field-group">
+                                    <span class="field-label">מיקוד:</span>
+                                    <span class="field-value">${postalCode && postalCode.trim() !== '' ? postalCode : 'אין מיקוד'}</span>
+                                    ${postalCode && postalCode.trim() !== '' ? `<button class="copy-btn" data-copy="${postalCode}">העתק</button>` : '<span style="width: 60px;"></span>'}
+                                </div>
+                                
+                                <div class="field-group">
+                                    <span class="field-label">שיטת משלוח:</span>
+                                    <span class="field-value">${shippingMethod}</span>
+                                    <button class="copy-btn" data-copy="${shippingMethod}">העתק</button>
+                                </div>
+                                
+                                <div class="product-info">
+                                    <div class="field-group">
+                                        <span class="field-label">שם המוצר:</span>
+                                        <span class="field-value">${productName}</span>
+                                        <span style="width: 60px;"></span>
+                                    </div>
+                                    
+                                    <div class="field-group">
+                                        <span class="field-label">כמות:</span>
+                                        <span class="field-value">${quantity}</span>
+                                        <span style="width: 60px;"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    resultsHTML += '</div>';
+                    resultsDiv.innerHTML = resultsHTML;
+                }
+                
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                resultsDiv.innerHTML = `
+                    <div class="error-message">
+                        <strong>שגיאה בטעינת הנתונים</strong><br>
+                        אנא נסה שוב מאוחר יותר או בדוק את החיבור לאינטרנט.
+                    </div>
+                `;
+            } finally {
+                isSearching = false;
+                searchBtn.disabled = false;
+                searchBtn.textContent = '🔍 חפש הזמנה';
+            }
+        }
+
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'הועתק!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                alert('שגיאה בהעתקה');
+            });
+        }
+
+        // Add event listener for copy buttons using event delegation
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('copy-btn') && e.target.dataset.copy) {
+                copyToClipboard(e.target.dataset.copy, e.target);
+            }
+        });
+
+        function closeExtension() {
+            if (confirm('האם אתה בטוח שברצונך לסגור?')) {
+                window.close();
+            }
+        }
+
+        // Allow search on Enter key
+        document.getElementById('orderNumber').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchOrder();
+            }
+        });
+
+        // Focus on input when page loads
+        document.getElementById('orderNumber').focus();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9759113e52dc64ec',t:'MTc1NjI3MTQ3Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
